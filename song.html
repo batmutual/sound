@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Suno AI Music Generator - Create Your Song</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Suno AI Music Generator 🎶</h1>
+    <h3 id="userInfo"></h3>
+    <p>Record your screen to unlock AI music generation.</p>
+
+    <!-- 🖥️ Screen Recording -->
+    <h2>🖥️ Step 1: Record Your Screen</h2>
+    <button id="startScreenRecording">Start Screen Recording</button>
+    <video id="screenPreview" controls style="display:none; margin-top: 20px; max-width: 100%;"></video>
+    <a id="screenDownload" style="display:none;" download="screen-recording.webm">Download Recording</a>
+
+    <!-- 🎵 Song Generator -->
+    <h2>🎵 Step 2: Generate AI Song(Please press ENTER)</h2>
+    <input type="text" id="songInput" placeholder="Enter a song name...">
+    <button id="generateBtn" disabled>Generate AI Song</button>
+    <div id="status"></div>
+
+    <!-- 👨‍🌾 Results Section -->
+    <div id="resultSection" style="display:none; margin-top: 30px;">
+      <h2>👨‍🌾 Presenting Amar - The AI Bhindiwala!</h2>
+      <img src="amarpic.jpg" alt="Amar Bhindiwala" style="max-width: 100%; border-radius: 12px; margin: 20px 0;">
+      <audio id="aiSong" controls style="width: 100%; max-width: 400px;">
+        <source src="your-song.mp3.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+  </div>
+
+  <script>
+    // Load user info
+    const params = new URLSearchParams(window.location.search);
+    const userName = params.get('name');
+    const userEmail = params.get('email');
+    const userInfo = document.getElementById("userInfo");
+
+    if (userName && userEmail) {
+      userInfo.textContent = `👋 Welcome, ${userName} (${userEmail})`;
+    } else {
+      userInfo.textContent = `👋 Welcome, guest!`;
+    }
+
+    // Song Generator
+    const button = document.getElementById("generateBtn");
+    const status = document.getElementById("status");
+    const song = document.getElementById("aiSong");
+    const resultSection = document.getElementById("resultSection");
+    const songInput = document.getElementById("songInput");
+
+    button.addEventListener("click", generateSong);
+    songInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        generateSong();
+      }
+    });
+
+    function generateSong() {
+      const songName = songInput.value.trim();
+      if (!songName) {
+        alert("Please enter a song name!");
+        return;
+      }
+
+      button.disabled = true;
+      songInput.disabled = true;
+      status.textContent = `🧠 Thinking... Creating "${songName}" with AI magic...`;
+
+      setTimeout(() => {
+        status.textContent = `✅ AI has finished generating "${songName}"! Enjoy below 👇`;
+        resultSection.style.display = "block";
+
+        const playPromise = song.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            console.error("Autoplay blocked:", error);
+            alert("🔊 Click play to hear the song — your browser blocked autoplay.");
+          });
+        }
+      }, 5000);
+    }
+
+    // Screen Recording Logic
+    const startScreenBtn = document.getElementById("startScreenRecording");
+    const screenPreview = document.getElementById("screenPreview");
+    const screenDownload = document.getElementById("screenDownload");
+
+    let screenRecorder;
+    let screenChunks = [];
+    let isScreenRecording = false;
+
+    startScreenBtn.addEventListener("click", async () => {
+      if (!isScreenRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: true
+          });
+
+          screenChunks = [];
+          screenRecorder = new MediaRecorder(stream);
+
+          screenRecorder.ondataavailable = e => {
+            if (e.data.size > 0) {
+              screenChunks.push(e.data);
+            }
+          };
+
+          screenRecorder.onstop = () => {
+            const blob = new Blob(screenChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+
+            screenPreview.src = url;
+            screenPreview.style.display = "block";
+            screenDownload.href = url;
+            screenDownload.style.display = "inline";
+
+            // Enable song generation
+            button.disabled = false;
+
+            // Upload recording
+            const formData = new FormData();
+            formData.append('video', blob, 'recording.webm');
+
+            fetch(`http://localhost:3000/upload?name=${encodeURIComponent(userName)}&email=${encodeURIComponent(userEmail)}`, {
+              method: 'POST',
+              body: formData
+            })
+            .then(res => res.ok ? alert("✅ Video uploaded!") : alert("❌ Upload failed."))
+            .catch(err => {
+              console.error(err);
+              alert("❌ Upload error.");
+            });
+          };
+
+          screenRecorder.start();
+          startScreenBtn.textContent = "Stop Screen Recording";
+          isScreenRecording = true;
+
+        } catch (err) {
+          alert("Screen recording failed: " + err);
+        }
+      } else {
+        screenRecorder.stop();
+        startScreenBtn.textContent = "Start Screen Recording";
+        isScreenRecording = false;
+      }
+    });
+  </script>
+</body>
+</html>
