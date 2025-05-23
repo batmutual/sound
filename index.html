@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Suno AI Music Generator - Sign Up</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to Suno AI Music Generator 🎶</h1>
+    <p>Sign up to create your personalized AI-generated song.</p>
+    
+    <!-- Sign-Up Form -->
+    <form id="signUpForm">
+      <input type="text" id="name" placeholder="Enter your name" required>
+      <input type="email" id="email" placeholder="Enter your email" required>
+      <button type="submit">Sign Up & Generate Song</button>
+    </form>
+    
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById("signUpForm");
+    const status = document.getElementById("status");
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();  // Prevent the form from refreshing the page
+
+      // Simulate the sign-up process
+      status.textContent = "🧠 Processing your sign-up... Please wait.";
+      
+      setTimeout(() => {
+        status.textContent = "✅ Sign-up successful! Redirecting...";
+        // Redirect to the next page (song generator page) after 3 seconds
+        window.location.href = "song.html";
+      }, 3000);  // 3 seconds fake processing time
+    });
+  </script>
+</body>
+</html>
